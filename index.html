@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Compressor</title>
-  <!-- Google Material Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
   <style>
     * {
       font-family: 'Roboto', sans-serif;
@@ -36,10 +35,7 @@
       display: block;
       margin: 12px 0 6px;
     }
-    input[type="file"] {
-      margin-bottom: 12px;
-    }
-    select, input[type="range"] {
+    input[type="file"], select, input[type="range"] {
       width: 100%;
       padding: 8px;
       margin-bottom: 12px;
@@ -48,6 +44,7 @@
       margin: 10px 0;
       font-size: 14px;
       color: #666;
+      min-height: 18px;
     }
     button {
       width: 100%;
@@ -71,77 +68,6 @@
   </style>
 </head>
 <body>
-  <script>
-const imageInput = document.getElementById("imageInput");
-const formatSelect = document.getElementById("formatSelect");
-const sizeRange = document.getElementById("sizeRange");
-const sizeValue = document.getElementById("sizeValue");
-const outputInfo = document.getElementById("outputInfo");
-const downloadBtn = document.getElementById("downloadBtn");
-const preview = document.getElementById("preview");
-
-let originalImage = null;
-
-sizeRange.addEventListener("input", () => {
-  sizeValue.textContent = sizeRange.value;
-  if (originalImage) compressImage();
-});
-
-imageInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const img = new Image();
-    img.onload = () => {
-      originalImage = img;
-      compressImage();
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-function compressImage() {
-  const format = formatSelect.value;
-  const targetSizeKB = parseInt(sizeRange.value);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  const width = originalImage.width;
-  const height = originalImage.height;
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(originalImage, 0, 0, width, height);
-
-  let quality = 0.9;
-  let output = canvas.toDataURL(format, quality);
-
-  // Iteratively reduce quality to meet size target (binary search-like)
-  while ((output.length / 1024) > targetSizeKB && quality > 0.1) {
-    quality -= 0.05;
-    output = canvas.toDataURL(format, quality);
-  }
-
-  const finalSizeKB = Math.round(output.length / 1024);
-  outputInfo.textContent = `Output: ~${finalSizeKB} KB`;
-  preview.src = output;
-  preview.hidden = false;
-
-  downloadBtn.disabled = false;
-  downloadBtn.onclick = () => {
-    const link = document.createElement("a");
-    link.href = output;
-    link.download = "compressed.jpg";
-    link.click();
-  };
-}
-</script>
-</body>
-</html>
-
   <div class="container">
     <h2>Image Compressor</h2>
 
@@ -163,3 +89,89 @@ function compressImage() {
 
     <img id="preview" class="preview-img" src="" hidden />
   </div>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const formatSelect = document.getElementById("formatSelect");
+    const sizeRange = document.getElementById("sizeRange");
+    const sizeValue = document.getElementById("sizeValue");
+    const outputInfo = document.getElementById("outputInfo");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const preview = document.getElementById("preview");
+
+    let originalImage = null;
+    let compressedDataURL = null;
+
+    // Update size display when slider moves
+    sizeRange.addEventListener("input", () => {
+      sizeValue.textContent = sizeRange.value;
+      if (originalImage) compressImage();
+    });
+
+    // Recompress if format changes
+    formatSelect.addEventListener("change", () => {
+      if (originalImage) compressImage();
+    });
+
+    // When user selects image
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          originalImage = img;
+          compressImage();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function compressImage() {
+      const format = formatSelect.value;
+      const targetSizeKB = parseInt(sizeRange.value);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const width = originalImage.width;
+      const height = originalImage.height;
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(originalImage, 0, 0, width, height);
+
+      let quality = 0.9;
+      let output = canvas.toDataURL(format, quality);
+
+      // Reduce quality to meet target size approximately
+      while ((output.length / 1024) > targetSizeKB && quality > 0.1) {
+        quality -= 0.05;
+        output = canvas.toDataURL(format, quality);
+      }
+
+      compressedDataURL = output;
+
+      const finalSizeKB = Math.round(output.length / 1024);
+      outputInfo.textContent = `Output: ~${finalSizeKB} KB`;
+      preview.src = output;
+      preview.hidden = false;
+
+      downloadBtn.disabled = false;
+    }
+
+    // Download compressed image when button clicked
+    downloadBtn.addEventListener("click", () => {
+      if (!compressedDataURL) return;
+
+      const link = document.createElement("a");
+      link.href = compressedDataURL;
+      link.download = "compressed.jpg";
+      link.click();
+    });
+  </script>
+</body>
+</html>
