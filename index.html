@@ -3,32 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>vacancyHai image compressor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
       font-family: 'San Francisco', 'Segoe UI', sans-serif;
       background: #f0f0f3;
-      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 100vh;
     }
 
     .container {
-      width: 95%;
+      width: 90%;
       max-width: 600px;
       background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(12px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
       border-radius: 16px;
-      padding: 30px;
+      padding: 20px;
     }
 
     h2 {
       margin-top: 0;
       font-weight: 600;
-      font-size: 24px;
+      font-size: 22px;
       color: #333;
       text-align: center;
     }
@@ -45,13 +50,19 @@
       outline: none;
     }
 
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+
     button {
-      padding: 10px 20px;
+      width: 48%;
+      padding: 10px;
       font-size: 16px;
       border-radius: 10px;
       border: none;
-      margin-top: 15px;
-      margin-right: 10px;
+      margin-top: 20px;
       cursor: pointer;
       transition: 0.2s ease;
     }
@@ -66,15 +77,34 @@
       color: white;
     }
 
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .info {
-      margin-top: 10px;
+      margin-top: 15px;
       font-size: 15px;
       font-weight: 500;
       color: #333;
+      word-break: break-word;
     }
 
     canvas {
       display: none;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 16px;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
@@ -94,8 +124,10 @@
       <option value="jpg">JPG</option>
     </select>
 
-    <button id="compressBtn">Compress</button>
-    <button id="downloadBtn" disabled>Download</button>
+    <div class="buttons">
+      <button id="compressBtn">Compress</button>
+      <button id="downloadBtn" disabled>Download</button>
+    </div>
 
     <div class="info" id="outputInfo">📦 Output Size: -</div>
 
@@ -171,7 +203,6 @@
       };
       reader.readAsDataURL(file);
 
-      // Show original format
       const formatMatch = file.type.split('/')[1];
       fileFormatInfo.innerText = `🖼️ Format: ${formatMatch.toUpperCase()}`;
     };
