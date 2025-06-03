@@ -83,7 +83,7 @@
     <label>Target Size (KB): <span id="sizeValue">100</span>KB</label>
     <input type="range" id="sizeRange" min="10" max="500" value="100" />
 
-    <div class="output-info" id="outputInfo">Output: -- KB (est.)</div>
+    <div class="output-info" id="outputInfo">Output: -- KB (target: -- KB)</div>
 
     <button id="downloadBtn" disabled>Download Compressed Image</button>
 
@@ -133,6 +133,7 @@
     function compressImage() {
       const format = formatSelect.value;
       const targetSizeKB = parseInt(sizeRange.value);
+      const tolerance = 0.005; // 0.5%
 
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -144,19 +145,30 @@
       canvas.height = height;
       ctx.drawImage(originalImage, 0, 0, width, height);
 
+      let low = 0.1;
+      let high = 0.95;
       let quality = 0.9;
       let output = canvas.toDataURL(format, quality);
+      let outputSizeKB = output.length / 1024;
 
-      // Reduce quality to meet target size approximately
-      while ((output.length / 1024) > targetSizeKB && quality > 0.1) {
-        quality -= 0.05;
+      // Binary search to get closest size within tolerance
+      while ((high - low) > 0.01) {
+        if (outputSizeKB > targetSizeKB * (1 + tolerance)) {
+          high = quality;
+          quality = (low + quality) / 2;
+        } else if (outputSizeKB < targetSizeKB * (1 - tolerance)) {
+          low = quality;
+          quality = (quality + high) / 2;
+        } else {
+          break;
+        }
         output = canvas.toDataURL(format, quality);
+        outputSizeKB = output.length / 1024;
       }
 
       compressedDataURL = output;
-
-      const finalSizeKB = Math.round(output.length / 1024);
-      outputInfo.textContent = `Output: ~${finalSizeKB} KB`;
+      const finalSizeKB = outputSizeKB.toFixed(2);
+      outputInfo.textContent = `Output: ~${finalSizeKB} KB (target: ${targetSizeKB} KB)`;
       preview.src = output;
       preview.hidden = false;
 
