@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Compressor</title>
+  <!-- Google Material Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+    }
+    body {
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+      font-weight: 500;
+    }
+    label {
+      font-weight: 500;
+      display: block;
+      margin: 12px 0 6px;
+    }
+    input[type="file"] {
+      margin-bottom: 12px;
+    }
+    select, input[type="range"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+    .output-info {
+      margin: 10px 0;
+      font-size: 14px;
+      color: #666;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .preview-img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <script>
+const imageInput = document.getElementById("imageInput");
+const formatSelect = document.getElementById("formatSelect");
+const sizeRange = document.getElementById("sizeRange");
+const sizeValue = document.getElementById("sizeValue");
+const outputInfo = document.getElementById("outputInfo");
+const downloadBtn = document.getElementById("downloadBtn");
+const preview = document.getElementById("preview");
+
+let originalImage = null;
+
+sizeRange.addEventListener("input", () => {
+  sizeValue.textContent = sizeRange.value;
+  if (originalImage) compressImage();
+});
+
+imageInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      originalImage = img;
+      compressImage();
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function compressImage() {
+  const format = formatSelect.value;
+  const targetSizeKB = parseInt(sizeRange.value);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const width = originalImage.width;
+  const height = originalImage.height;
+
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(originalImage, 0, 0, width, height);
+
+  let quality = 0.9;
+  let output = canvas.toDataURL(format, quality);
+
+  // Iteratively reduce quality to meet size target (binary search-like)
+  while ((output.length / 1024) > targetSizeKB && quality > 0.1) {
+    quality -= 0.05;
+    output = canvas.toDataURL(format, quality);
+  }
+
+  const finalSizeKB = Math.round(output.length / 1024);
+  outputInfo.textContent = `Output: ~${finalSizeKB} KB`;
+  preview.src = output;
+  preview.hidden = false;
+
+  downloadBtn.disabled = false;
+  downloadBtn.onclick = () => {
+    const link = document.createElement("a");
+    link.href = output;
+    link.download = "compressed.jpg";
+    link.click();
+  };
+}
+</script>
+</body>
+</html>
+
+  <div class="container">
+    <h2>Image Compressor</h2>
+
+    <label>Select an image:</label>
+    <input type="file" id="imageInput" accept="image/*" />
+
+    <label>Select output format:</label>
+    <select id="formatSelect">
+      <option value="image/jpeg">JPG</option>
+      <option value="image/jpeg">JPEG</option>
+    </select>
+
+    <label>Target Size (KB): <span id="sizeValue">100</span>KB</label>
+    <input type="range" id="sizeRange" min="10" max="500" value="100" />
+
+    <div class="output-info" id="outputInfo">Output: -- KB (est.)</div>
+
+    <button id="downloadBtn" disabled>Download Compressed Image</button>
+
+    <img id="preview" class="preview-img" src="" hidden />
+  </div>
