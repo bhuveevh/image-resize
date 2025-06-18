@@ -1,8 +1,8 @@
-<!DOCTYPE html>More actions
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>vH-Image Compressor/Expand</title>
+  <title>vacancyHai image compressor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { box-sizing: border-box; }
@@ -52,11 +52,6 @@
       margin-top: 15px; font-size: 15px; font-weight: 500; color: #333; word-break: break-word;
     }
     canvas { display: none; }
-    .preview {
-      display: block; margin: 20px auto;
-      max-width: 100%; height: auto;
-      border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
     .branding {
       text-align: center; margin-top: 25px; font-size: 14px; color: #666;
     }
@@ -71,7 +66,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>vH-Image Compressor/Expand</h2>
+    <h2>🧠 vacancyHai image compressor</h2>
 
     <input type="file" id="imageInput" accept="image/*">
     <div class="info" id="fileFormatInfo">🖼️ Format: -</div>
@@ -92,7 +87,6 @@
 
     <button id="downloadBtn" disabled>Download</button>
     <div class="info" id="outputInfo">📦 Output Size: -</div>
-    <img id="previewImage" class="preview" style="display: none;"/>
 
     <div class="branding">
       Developed by <a href="https://vacancyhai.online" target="_blank">VACANCYHAI.ONLINE</a> | Inspired by USERS
@@ -112,7 +106,6 @@
     const outputInfo = document.getElementById('outputInfo');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const preview = document.getElementById('previewImage');
 
     let processedBlob = null;
 
@@ -171,27 +164,10 @@
 
         if (bestBlob) {
           processedBlob = bestBlob;
-          // Optional: Try slight quality bump if well below target
-if (!expand && processedBlob.size / 1024 < targetSizeKB - 10) {
-  canvas.toBlob(betterBlob => {
-    if (betterBlob && betterBlob.size < targetSizeKB * 1024) {
-      processedBlob = betterBlob;
-    }
-    showPreview();
-  }, 'image/jpeg', 0.75);
-} else {
-  showPreview();
-}
-
-          const url = URL.createObjectURL(processedBlob);
-          preview.src = url;
-          preview.style.display = 'block';
-          preview.style.width = width + "px";
-          preview.style.height = "auto";
           outputInfo.innerHTML = `📦 Output Size: ${(processedBlob.size / 1024).toFixed(2)} KB`;
           downloadBtn.disabled = false;
         } else {
-          alert("Unable to compress to target size.");
+          alert("Unable to process image to target size.");
         }
       })();
     }
@@ -226,5 +202,6 @@ if (!expand && processedBlob.size / 1024 < targetSizeKB - 10) {
       link.download = filename;
       link.click();
     };
-  </script>More actions
+  </script>
 </body>
+</html>
