@@ -5,12 +5,9 @@
   <title>vacancyHai image compressor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'San Francisco', 'Segoe UI', sans-serif;
       background: #f0f0f3;
       display: flex;
@@ -19,8 +16,7 @@
       min-height: 100vh;
     }
     .container {
-      width: 90%;
-      max-width: 600px;
+      width: 90%; max-width: 600px;
       background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(12px);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
@@ -28,86 +24,43 @@
       padding: 20px;
     }
     h2 {
-      margin-top: 0;
-      font-weight: 600;
-      font-size: 22px;
-      color: #333;
-      text-align: center;
+      margin-top: 0; font-weight: 600; font-size: 22px;
+      color: #333; text-align: center;
     }
-    input[type="file"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      outline: none;
+    input[type="file"], input[type="number"], select {
+      width: 100%; padding: 10px; margin-top: 10px;
+      font-size: 16px; border-radius: 10px; border: 1px solid #ccc; outline: none;
     }
     label {
-      display: block;
-      margin-top: 15px;
-      font-weight: 500;
+      display: block; margin-top: 15px; font-weight: 500;
     }
     .buttons {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
     }
     button {
       flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-      margin-top: 20px;
-      cursor: pointer;
-      transition: 0.2s ease;
+      padding: 10px; font-size: 16px; border-radius: 10px;
+      border: none; margin-top: 20px; cursor: pointer; transition: 0.2s ease;
     }
-    #compressBtn {
-      background-color: #007aff;
-      color: white;
-    }
-    #expandBtn {
-      background-color: #ff9800;
-      color: white;
-    }
+    #compressBtn { background-color: #007aff; color: white; }
+    #expandBtn { background-color: #ff9800; color: white; }
     #downloadBtn {
-      background-color: #28a745;
-      color: white;
-      width: 100%;
+      background-color: #28a745; color: white;
+      width: 100%; margin-top: 10px;
     }
     .info {
-      margin-top: 15px;
-      font-size: 15px;
-      font-weight: 500;
-      color: #333;
-      word-break: break-word;
+      margin-top: 15px; font-size: 15px; font-weight: 500; color: #333; word-break: break-word;
     }
-    canvas {
-      display: none;
-    }
+    canvas { display: none; }
     .branding {
-      text-align: center;
-      margin-top: 25px;
-      font-size: 14px;
-      color: #666;
+      text-align: center; margin-top: 25px; font-size: 14px; color: #666;
     }
     .branding a {
-      text-decoration: none;
-      color: #007aff;
-      font-weight: bold;
+      text-decoration: none; color: #007aff; font-weight: bold;
     }
     @media (max-width: 480px) {
-      .container {
-        padding: 16px;
-      }
-      button {
-        width: 100% !important;
-        margin-top: 10px;
-      }
+      .container { padding: 16px; }
+      button { width: 100% !important; margin-top: 10px; }
     }
   </style>
 </head>
@@ -133,11 +86,10 @@
     </div>
 
     <button id="downloadBtn" disabled>Download</button>
-
     <div class="info" id="outputInfo">📦 Output Size: -</div>
 
     <div class="branding">
-      Developed by <a href="https://vacancyhai.online" target="_blank" rel="noopener noreferrer">VACANCYHAI.ONLINE</a> &nbsp;|&nbsp; Inspired by USERS
+      Developed by <a href="https://vacancyhai.online" target="_blank">VACANCYHAI.ONLINE</a> | Inspired by USERS
     </div>
 
     <canvas id="canvas"></canvas>
@@ -157,16 +109,19 @@
 
     let processedBlob = null;
 
-    function compressImage(img, targetSizeKB, callback, expand = false) {
+    function processImage(img, targetSizeKB, expand = false) {
       let qualityMin = expand ? 0.9 : 0.05;
       let qualityMax = expand ? 1.0 : 0.95;
       let bestBlob = null;
       let iterations = 10;
 
-      const tryQuality = (q) => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+      const originalWidth = img.width;
+      const originalHeight = img.height;
+
+      const tryQuality = (q, scale = 1) => {
+        canvas.width = originalWidth * scale;
+        canvas.height = originalHeight * scale;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         return new Promise(resolve => {
           canvas.toBlob(blob => {
             resolve({ blob, size: blob.size / 1024 });
@@ -175,39 +130,46 @@
       };
 
       (async () => {
+        let scale = 1.0;
         while (iterations--) {
           const midQ = (qualityMin + qualityMax) / 2;
-          const { blob, size } = await tryQuality(midQ);
+          const { blob, size } = await tryQuality(midQ, expand ? scale : 1);
           if (Math.abs(size - targetSizeKB) <= 0.5) {
             bestBlob = blob;
             break;
           }
-          if (expand ? size < targetSizeKB : size > targetSizeKB) {
-            qualityMin = midQ;
-            bestBlob = blob;
+          if (expand) {
+            if (size < targetSizeKB) {
+              scale += 0.05;
+              qualityMin = midQ;
+              bestBlob = blob;
+            } else {
+              qualityMax = midQ;
+            }
           } else {
-            qualityMax = midQ;
+            if (size > targetSizeKB) {
+              qualityMax = midQ;
+            } else {
+              qualityMin = midQ;
+              bestBlob = blob;
+            }
           }
         }
-        callback(bestBlob);
+        processedBlob = bestBlob;
+        outputInfo.innerHTML = `📦 Output Size: ${(processedBlob.size / 1024).toFixed(2)} KB`;
+        downloadBtn.disabled = false;
       })();
     }
 
-    function handleImageProcessing(expand = false) {
+    function handleImageProcess(expand = false) {
       const file = imageInput.files[0];
       if (!file) return alert("Please upload an image.");
       const targetSize = parseFloat(targetSizeInput.value);
-
       const reader = new FileReader();
       reader.onload = e => {
         const img = new Image();
         img.onload = () => {
-          compressImage(img, targetSize, blob => {
-            if (!blob) return alert("Processing failed.");
-            processedBlob = blob;
-            outputInfo.innerHTML = `📦 Output Size: ${(blob.size / 1024).toFixed(2)} KB`;
-            downloadBtn.disabled = false;
-          }, expand);
+          processImage(img, targetSize, expand);
         };
         img.src = e.target.result;
       };
@@ -217,15 +179,14 @@
       fileFormatInfo.innerText = `🖼️ Format: ${formatMatch.toUpperCase()}`;
     }
 
-    compressBtn.onclick = () => handleImageProcessing(false);
-    expandBtn.onclick = () => handleImageProcessing(true);
+    compressBtn.onclick = () => handleImageProcess(false);
+    expandBtn.onclick = () => handleImageProcess(true);
 
     downloadBtn.onclick = () => {
       if (!processedBlob) return;
       const selectedFormat = formatSelect.value;
       const timestamp = Math.floor(Date.now() / 1000);
       const filename = `VACANCYHAIONLINE${timestamp}.${selectedFormat}`;
-
       const link = document.createElement('a');
       link.href = URL.createObjectURL(processedBlob);
       link.download = filename;
