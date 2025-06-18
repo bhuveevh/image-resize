@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html>More actions
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -92,7 +92,7 @@
 
     <button id="downloadBtn" disabled>Download</button>
     <div class="info" id="outputInfo">📦 Output Size: -</div>
-
+    <img id="previewImage" class="preview" style="display: none;"/>
 
     <div class="branding">
       Developed by <a href="https://vacancyhai.online" target="_blank">VACANCYHAI.ONLINE</a> | Inspired by USERS
@@ -112,7 +112,7 @@
     const outputInfo = document.getElementById('outputInfo');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-   
+    const preview = document.getElementById('previewImage');
 
     let processedBlob = null;
 
@@ -171,6 +171,18 @@
 
         if (bestBlob) {
           processedBlob = bestBlob;
+          // Optional: Try slight quality bump if well below target
+if (!expand && processedBlob.size / 1024 < targetSizeKB - 10) {
+  canvas.toBlob(betterBlob => {
+    if (betterBlob && betterBlob.size < targetSizeKB * 1024) {
+      processedBlob = betterBlob;
+    }
+    showPreview();
+  }, 'image/jpeg', 0.75);
+} else {
+  showPreview();
+}
+
           const url = URL.createObjectURL(processedBlob);
           preview.src = url;
           preview.style.display = 'block';
@@ -214,6 +226,5 @@
       link.download = filename;
       link.click();
     };
-  </script>
+  </script>More actions
 </body>
-</html>
