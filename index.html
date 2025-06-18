@@ -52,6 +52,11 @@
       margin-top: 15px; font-size: 15px; font-weight: 500; color: #333; word-break: break-word;
     }
     canvas { display: none; }
+    .preview {
+      display: block; margin: 20px auto;
+      max-width: 100%; height: auto;
+      border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
     .branding {
       text-align: center; margin-top: 25px; font-size: 14px; color: #666;
     }
@@ -67,12 +72,12 @@
 <body>
   <div class="container">
     <h2>🧠 vacancyHai image compressor</h2>
-    
+
     <input type="file" id="imageInput" accept="image/*">
     <div class="info" id="fileFormatInfo">🖼️ Format: -</div>
 
     <label for="targetSize">🎯 Target Size (KB):</label>
-    <input type="number" id="targetSize" min="10" value="100">
+    <input type="number" id="targetSize" min="5" value="100">
 
     <label for="formatSelect">💾 Output Format:</label>
     <select id="formatSelect">
@@ -87,6 +92,7 @@
 
     <button id="downloadBtn" disabled>Download</button>
     <div class="info" id="outputInfo">📦 Output Size: -</div>
+    <img id="previewImage" class="preview" style="display: none;"/>
 
     <div class="branding">
       Developed by <a href="https://vacancyhai.online" target="_blank">VACANCYHAI.ONLINE</a> | Inspired by USERS
@@ -106,22 +112,22 @@
     const outputInfo = document.getElementById('outputInfo');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const preview = document.getElementById('previewImage');
 
     let processedBlob = null;
 
     function processImage(img, targetSizeKB, expand = false) {
-      let qualityMin = expand ? 0.9 : 0.01;
-      let qualityMax = expand ? 1.0 : 0.95;
+      let qualityMin = expand ? 0.8 : 0.01;
+      let qualityMax = expand ? 1.0 : 0.8;
       let bestBlob = null;
-      let iterations = 10;
+      let iterations = 15;
+      let width = img.width;
+      let height = img.height;
 
-      const originalWidth = img.width;
-      const originalHeight = img.height;
-
-      const tryQuality = (q, scale = 1) => {
-        canvas.width = originalWidth * scale;
-        canvas.height = originalHeight * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const tryCompress = (q, w, h) => {
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
         return new Promise(resolve => {
           canvas.toBlob(blob => {
             resolve({ blob, size: blob.size / 1024 });
@@ -132,32 +138,47 @@
       (async () => {
         let scale = 1.0;
         while (iterations--) {
-          const midQ = (qualityMin + qualityMax) / 2;
-          const { blob, size } = await tryQuality(midQ, expand ? scale : 1);
-          if (Math.abs(size - targetSizeKB) <= 0.5) {
+          const quality = (qualityMin + qualityMax) / 2;
+          const currentWidth = Math.max(1, width * scale);
+          const currentHeight = Math.max(1, height * scale);
+          const { blob, size } = await tryCompress(quality, currentWidth, currentHeight);
+
+          if (Math.abs(size - targetSizeKB) < 1.5) {
             bestBlob = blob;
             break;
           }
+
           if (expand) {
             if (size < targetSizeKB) {
               scale += 0.05;
-              qualityMin = midQ;
+              qualityMin = quality;
               bestBlob = blob;
             } else {
-              qualityMax = midQ;
+              qualityMax = quality;
             }
           } else {
             if (size > targetSizeKB) {
-              qualityMax = midQ;
+              scale -= 0.1;
+              qualityMax = quality;
             } else {
-              qualityMin = midQ;
+              qualityMin = quality;
               bestBlob = blob;
             }
           }
         }
-        processedBlob = bestBlob;
-        outputInfo.innerHTML = `📦 Output Size: ${(processedBlob.size / 1024).toFixed(2)} KB`;
-        downloadBtn.disabled = false;
+
+        if (bestBlob) {
+          processedBlob = bestBlob;
+          const url = URL.createObjectURL(processedBlob);
+          preview.src = url;
+          preview.style.display = 'block';
+          preview.style.width = width + "px";
+          preview.style.height = "auto";
+          outputInfo.innerHTML = `📦 Output Size: ${(processedBlob.size / 1024).toFixed(2)} KB`;
+          downloadBtn.disabled = false;
+        } else {
+          alert("Unable to compress to target size.");
+        }
       })();
     }
 
@@ -174,7 +195,6 @@
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
-
       const formatMatch = file.type.split('/')[1];
       fileFormatInfo.innerText = `🖼️ Format: ${formatMatch.toUpperCase()}`;
     }
