@@ -110,7 +110,7 @@
     let processedBlob = null;
 
     function processImage(img, targetSizeKB, expand = false) {
-      let qualityMin = expand ? 0.9 : 0.05;
+      let qualityMin = expand ? 0.9 : 0.01;
       let qualityMax = expand ? 1.0 : 0.95;
       let bestBlob = null;
       let iterations = 10;
