@@ -171,18 +171,6 @@
 
         if (bestBlob) {
           processedBlob = bestBlob;
-          // Optional: Try slight quality bump if well below target
-if (!expand && processedBlob.size / 1024 < targetSizeKB - 10) {
-  canvas.toBlob(betterBlob => {
-    if (betterBlob && betterBlob.size < targetSizeKB * 1024) {
-      processedBlob = betterBlob;
-    }
-    showPreview();
-  }, 'image/jpeg', 0.75);
-} else {
-  showPreview();
-}
-
           const url = URL.createObjectURL(processedBlob);
           preview.src = url;
           preview.style.display = 'block';
